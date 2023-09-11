@@ -150,18 +150,50 @@ sapply(ns, s)
 Now we are ready to help your friend. Let's give them options of places with low murders rates, mountains, and not too small.
 
 (@) Show the subset of `murders` showing states with less than 1 per 100,000 deaths. Show all variables.
+```{r}
+murders$rate <- murders$total/murders$population * 100000
+head(murders)
+ind <- murders$rate < 1
+murders[ind,]
+```
 
 (@) Show the subset of `murders` showing states with less than 1 per 100,000 deaths and in the West of the US. Don't show the `region` variable.
+```{r}
+ind <- murders$death_per_100000 < 1 & murders$region == 'West'
+murders[ind,]
+```
 
 (@) Show the largest state with a rate less than 1 per 100,000.
+```{r}
+ind <- murders$death_per_100000 < 1 
+murders_sub <- murders[ind,]
+ind1 <- murders_sub$population == max(murders_sub$population)
+murders_sub[ind1,]
+
+murders_sub[which.max(murders_sub$population)]
+```
 
 (@) Show the state with a population of more than 10 million with the lowest rate.
+```{r}
+ind <- murders$population > 10^7
+murders_sub <- murders[ind,]
+murders_sub[which.min(murders_sub$rate),]
+```
 
 (@) Compute the rate for each region of the US.
+```{r}
+index <- with(murders, split(seq_along(region),region))
+sapply(index, function(ind) {
+  sum(murders[ind,]$total)/sum(murders[ind,]$population) * 10^5
+  })
+```
 
 More practice exercises:
 
 (@) Create a vector of numbers that starts at 6, does not pass 55, and adds numbers in increments of 4/7: 6, 6 + 4/7, 6 + 8/7, and so on. How many numbers does the list have? Hint: use `seq` and `length`.
+```{r}
+seq(6:55)+4*length(6:55)/7
+```
 
 (@) Make this data frame:
 
@@ -173,6 +205,9 @@ city_temps <- data.frame(name = city, temperature = temp)
 ```
 
 Convert the temperatures to Celsius.
+```{r}
+city_temps <- city_temps$temp
+```
 
 (@) Compute the following sum  
 
