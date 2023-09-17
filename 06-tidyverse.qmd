@@ -259,23 +259,76 @@ NHANES |> filter(!is.na(Race1) &!is.na(Race3)) |> filter(as.character(Race1)!=as
 
 (@) Define a new `race` variable that has as few `NA` and `Other` as possible. 
 ```{r}
-NHANES |> mutate(race = ifelse(is.na(Race1),levels(Race3),levels(Race1))) #|> summarise(sum1 = sum(is.na(race)))
-NHANES |> mutate(Race = Race3) |> mutate(Race = ifelse(is.na(Race),Race1,Race)) 
+NHANES |> mutate(Race = ifelse(is.na(Race1),levels(Race3),levels(Race1))) #|> summarise(sum1 = sum(is.na(race)))
+dat <- NHANES %>% mutate(Race = Race3) |>
+  mutate(Race = if_else(is.na(Race), Race1, Race))
 ```
 
 (@) Compute proportion of individuals that smoked at the time of the survey, by race category and gender. Keep track of how many people answered the question. Order the result by the number that answered. Read the help file for NHANES carefully before doing this one.
+```{r}
+dat|> group_by(Gender, Race) |> 
+  summarize(n = sum(!is.na(Smoke100)), 
+            smoke = sum(SmokeNow == "Yes", na.rm = TRUE)) |>
+  mutate(smoke = smoke/n) |>
+  arrange(desc(n))
 
+```
 
 
 (@) Create a new dataset that combines the `Mexican` and `Hispanic`, and removes the `Other` category. Hint: use the function `forcats::fct_collapse()`.
+```{r}
+dat <- dat |> 
+  mutate(Race = forcats::fct_collapse(Race,Hispanic = c('Mexican','Hispanic') )) |> 
+  filter(Race != 'Other') |>
+  mutate(Race = droplevels(Race))
+```
 
 
 (@) Recompute proportion of individuals that smoke now by  race category and gender. Order by rate of smokers.
+```{r}
+ dat |> group_by(Gender,Race) |> 
+  summarise(n= sum(!is.na(Smoke100)),smoke=sum(SmokeNow=='Yes',na.rm = TRUE)) |>
+  mutate(smokeRate = smoke/n) |> arrange(desc(smokeRate))
+```
+
 
 (@) Compute the median age by race category and gender order by Age.
+```{r}
+dat |> group_by(Gender,Race) |> summarise(Age = median(Age)) |> arrange(Gender,Age)
+
+```
 
 
-(@) Now redo the smoking rate calculation by age group. But first, remove individuals with no group and remove any
-age groups for which less than 10 people answered the question. Within each age group and Gender order by percent that smokes.
+(@) Now redo the smoking rate calculation by age group. But first, remove individuals with no group and remove any age groups for which less than 10 people answered the question. Within each age group and Gender order by percent that smokes.
+```{r}
+dat |> 
+  filter(!is.na(AgeDecade)) |>
+  group_by(AgeDecade) |> 
+  mutate(n = sum(!is.na(Smoke100))) |> 
+  ungroup() |>
+  filter(n >= 10) |>
+  group_by(AgeDecade, Gender, Race) |>
+  summarize(n = sum(!is.na(Smoke100)), 
+            smoke = sum(SmokeNow == "Yes", na.rm = TRUE), 
+            .groups = "drop") |> ## This is similar to running ungroup() in a next step
+  mutate(smoke = smoke/n) |>
+  arrange(AgeDecade, Gender, desc(smoke))
+```
+
+
+
+
+```{r}
+smok <- dat |> filter(!is.na(AgeDecade)) |> group_by(AgeDecade) |> 
+  mutate(n = sum(!is.na(Smoke100),na.rm = T)) |> ungroup() |> 
+  filter(n>10) |> group_by(AgeDecade,Gender,Race) |> summarise(n=sum(!is.na(Smoke100)), smoke=sum(SmokeNow=='Yes', na.rm = T),.groups = 'drop') |> mutate(smoke=smoke/n) |> arrange(AgeDecade,Gender,desc(smoke))
+
+## Bonus: a plot
+smok |> ggplot(aes(AgeDecade, smoke, color = Race)) +
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(~Gender)
+```
+
 
 
