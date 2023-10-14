@@ -22,7 +22,6 @@ prop.table(table(heights$sex))
 
 Here is the distribution for the regions in the `murders` dataset:
 
-
 ```{r state-region-distribution, echo=FALSE}
 murders |> group_by(region) |>
   summarize(n = n()) |>
@@ -177,6 +176,7 @@ Because these are reported heights, a possibility is that the student meant to e
 
 
 (@) Suppose we can't make a plot and want to compare the distributions side by side. We can't just list all the numbers. Instead, we will look at the percentiles. Create a five row table showing `female_percentiles` and `male_percentiles` with the 10th, 30th, 50th, 70th, & 90th percentiles for each sex. Then create a data frame with these two as columns.
+
 ```{r}
 library(dslabs)
 qs <- seq(10,90,20)
@@ -208,6 +208,10 @@ Africa
 
 (@) What is median population size for Africa to the nearest million?
 12
+```{r}
+median(tab[tab$continent=='Africa',]|>pull(population))/10^6
+```
+
 
 (@) What proportion of countries in Europe have populations below 14 million?
 
@@ -222,11 +226,10 @@ sum(check$yes)/dim(check)[1]
 
 
 (@) If we use a log transformation, which continent shown above has the largest interquartile range?
-Africa
+Americas
 ```{r}
-tab|>mutate(log = log10(population)) |> ggplot(aes(x = continent, y = log)) + 
-  geom_boxplot() + 
-  scale_y_continuous(trans = "log10", breaks = c(1,10,100,1000)) + ylab("Population in millions")
+tab |> group_by(continent) |>
+  summarize(diff(quantile(log10(population), c(.25,.75))))
 ```
 
 

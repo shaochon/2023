@@ -112,6 +112,7 @@ murders$pop_rank <- rank(murders$population)
 head(murders)
 ```
 
+
 You can access columns with the `$` 
 
 ```{r}
@@ -245,7 +246,7 @@ Exercise: How can we make this go much faster?
 
 ```{r}
 #| eval: false
-system.time()
+system.time({levels(y) <- tolower(levels(y))})
 ```
 
 Factors can be confusing:
@@ -345,12 +346,6 @@ as.numeric(x)
 ```
 
 ```{r}
-x <- factor(c("a","b","b","c"))
-as.character(x)
-as.numeric(x)
-```
-
-```{r}
 x <- c("12323", "12,323")
 as.numeric(x)
 readr::parse_guess(x)
@@ -362,6 +357,7 @@ Data frames are a type of list. List permit components of different types and, u
 
 ```{r}
 x <- list(name = "John", id = 112, grades = c(95, 87, 92))
+x
 ```
 
 You can access components in different ways:
@@ -494,14 +490,33 @@ plot
 ## Exercises
 
 (@) What is the sum of the first 100 positive integers? The formula for the sum of integers $1$ through $n$ is $n(n+1)/2$. Define $n=100$ and then use R to compute the sum of $1$ through $100$ using the formula. What is the sum?
+```{r}
+sum(1:100)
+```
 
 (@) Now use the same formula to compute the sum of the integers from 1 through 1,000.
+```{r}
+sum(1:1000)
+```
+
 
 (@) Now use the functions `seq` and `sum` to compute the sum with R for any `n`, rather than a formula.
+```{r}
+n = 10
+sum(seq(1,n))
+```
 
 (@) In math and programming, we say that we evaluate a function when we replace the argument with a given number. So if we type `sqrt(4)`, we evaluate the `sqrt` function. In R, you can evaluate a function inside another function. The evaluations happen from the inside out. Use one line of code to compute the log, in base 10, of the square root of 100.
+```{r}
+log10(sqrt(100))
+```
+
 
 
 (@) Make sure the US murders dataset is loaded. Use the function `str` to examine the structure of the `murders` object. What are the column names used by the data frame for these five variables?
+```{r}
+library(dslabs)
+str(murders)
+```
 
 

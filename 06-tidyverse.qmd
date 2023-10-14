@@ -111,6 +111,7 @@ murders |> summarize(median = median(population), min = min(population), max = m
 
 Why don't we use `quantiles`? 
 
+
 ```{r}
 murders |> summarize(quantiles = quantile(population, c(0.5, 0, 1)))
 ```
@@ -229,12 +230,16 @@ murders |> filter(rate<1&region=='West') |> select(-region)
 
 (@) Show the largest state with a rate less than 1 per 100,000.
 ```{r}
-murders |> filter(rate<1&region=='West') |> arrange(desc(population)) %>% head(1)
+murders |> filter(rate<1) |> arrange(desc(population)) %>% head(1)
+```
+
+```{r}
+murders |> filter(rate<1) |> slice_max(population)
 ```
 
 (@) Show the state with a population of more than 10 million with the lowest rate.
 ```{r}
-murders |> filter(population>10^7) |> arrange(rate) %>% head(1)
+murders |> filter(population>10^7) |> slice_min(rate)
 ```
 
 (@) Compute the rate for each region of the US.
@@ -251,7 +256,6 @@ library(NHANES)
 
 (@) Check for consistency between `Race1` and `Race3`. Do any rows have different entries?
 ```{r}
-head(NHANES)
 NHANES |> filter(!is.na(Race1) &!is.na(Race3)) |> filter(as.character(Race1)!=as.character(Race3) ) |>count(Race1,Race3)
 ```
 
@@ -259,23 +263,27 @@ NHANES |> filter(!is.na(Race1) &!is.na(Race3)) |> filter(as.character(Race1)!=as
 
 (@) Define a new `race` variable that has as few `NA` and `Other` as possible. 
 ```{r}
-NHANES |> mutate(Race = ifelse(is.na(Race1),levels(Race3),levels(Race1))) #|> summarise(sum1 = sum(is.na(race)))
+NHANES |> mutate(race = Race3) |>
+  mutate(race =if_else(is.na(Race1),Race1,Race3)) |>
+  select(race) |> table()
+```
+
+```{r}
 dat <- NHANES %>% mutate(Race = Race3) |>
   mutate(Race = if_else(is.na(Race), Race1, Race))
 ```
 
 (@) Compute proportion of individuals that smoked at the time of the survey, by race category and gender. Keep track of how many people answered the question. Order the result by the number that answered. Read the help file for NHANES carefully before doing this one.
 ```{r}
-dat|> group_by(Gender, Race) |> 
-  summarize(n = sum(!is.na(Smoke100)), 
-            smoke = sum(SmokeNow == "Yes", na.rm = TRUE)) |>
+dat |> group_by(Race, Gender) |>
+  summarise(smoke = sum(SmokeNow=='Yes',na.rm = T), n = sum(!is.na(Smoke100))) |>
   mutate(smoke = smoke/n) |>
   arrange(desc(n))
-
 ```
 
 
 (@) Create a new dataset that combines the `Mexican` and `Hispanic`, and removes the `Other` category. Hint: use the function `forcats::fct_collapse()`.
+
 ```{r}
 dat <- dat |> 
   mutate(Race = forcats::fct_collapse(Race,Hispanic = c('Mexican','Hispanic') )) |> 
@@ -284,7 +292,7 @@ dat <- dat |>
 ```
 
 
-(@) Recompute proportion of individuals that smoke now by  race category and gender. Order by rate of smokers.
+(@) Recompute proportion of individuals that smoke now by race category and gender. Order by rate of smokers.
 ```{r}
  dat |> group_by(Gender,Race) |> 
   summarise(n= sum(!is.na(Smoke100)),smoke=sum(SmokeNow=='Yes',na.rm = TRUE)) |>

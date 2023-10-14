@@ -78,7 +78,7 @@ data.frame(date = dates, month = month(dates), day = day(dates), year = year(dat
 We can also extract the month labels:
 
 ```{r}
-month(dates, label = TRUE)
+month(dates, label = T)
 ```
 
 
@@ -146,7 +146,7 @@ x
 
 
 ```{r}
-x <- seq(today() - 365 + 1, today(), by = "days")
+x <- seq(today() - 7 + 1, today(), by = "days")
 table(floor_date(x, unit = "week"))
 table(floor_date(x, unit = "year"))
 ```
@@ -206,10 +206,19 @@ dat <- map_df(str_split(pdf_text(fn), "\n"), function(s){
 
 
 1\. We want to make a plot of death counts versus date. A first step is to convert the month variable from characters to numbers. Hint: use `months.abb`.
+```{r}
+dat <- mutate(dat, year = as.numeric(year))
+```
+
+```{r}
+dat <- dat |> mutate(month = match(month, month.abb))
+```
+
+
 2\. Create a new column `date` with the date for each observation. Hint: use the `make_date` function.
 
 ```{r}
-dat <- dat |> mutate(year = as.numeric(year), month = match(month,month.abb),  date=make_date(year,month,day))
+dat <- dat |> mutate(date=make_date(year,month,day))
 
 ```
 
