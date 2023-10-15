@@ -382,67 +382,160 @@ If variables are positively correlated, variance goes up.
 Use Monte Carlo simulations to answer these questions. Feel free to confirm using math.
 
 (@) Two teams, say the Celtics and the Cavs, are playing a seven game series. The Cavs are a better team and have a 60% chance of winning each game. What is the probability that the Celtics win **at least** one game? Use a Monte Carlo simulation to compute (or confirm) your answer.
+```{r}
+n <- 10^5
+b <- 10^5
+nowins <- replicate(b, {
+  x <- sample(c(0, 1), size = 4, replace = TRUE, prob = c(0.6, 0.4))
+  sum(x) == 0
+})
+1 - mean(nowins)
+```
 
 (@) Two teams, say the Cavs and the Warriors, are playing a seven game championship series. The first to win four games, therefore, wins the series. The teams are equally good so they each have a 50-50 chance of winning each game. If the Cavs lose the first game, what is the probability that they win the series?
+```{r}
+samples <- replicate(10^5,{
+  c = 0
+  w = 1
+  while(c<4&w<4){
+    s <- sample(c(0,1),size=1,replace = T,prob = c(0.5,0.5))
+    if(s==0){
+      c=c+1
+    }else{
+      w=w+1
+    }
+  }
+  return
+  return(c==4)
+})
+mean(samples)
+```
+
+```{r}
+cavswins <- replicate(10^5, {
+  x <- sample(c(0, 1), size = 6, replace = TRUE, prob = c(0.5, 0.5))
+  sum(x) >= 4
+})
+mean(cavswins)
+```
 
 (@) Two teams, $A$ and $B$, are playing a seven game series. Team $A$ is better than team $B$ and has a $p>0.5$ chance of winning each game. Write a function that uses Monte Carlo simulation to compute the probability of the underdog winning the series for any value $p$. The plot the results for `p <- seq(0.5, 0.95, 0.025)`. 
 
+```{r}
+winprob <- function(p) {
+  nowins <- replicate(10^4, {
+    x <- sample(c(0, 1), size = 7, replace = TRUE, prob = c(p, 1 - p))
+    sum(x)>=4
+  })
+ mean(nowins)
+}
+p <- seq(0.5, 0.95, 0.025)
+plot(p, sapply(p, winprob))
+```
+
 (@) Repeat the exercise above, but now keep the probability fixed at `p <- 0.75` and compute the probability for different series lengths: best of 1 game, 3 games, 5 games,... Specifically, `n <- seq(1, 25, 2)`. 
 
-
+```{r}
+winprob <- function(n) {
+  nowins <- replicate(10^5, {
+    x <- sample(c(0, 1), size = n, replace = TRUE, prob = c(0.75, 0.25))
+    sum(x) >= ceiling(n/2)
+  })
+  mean(nowins)
+}
+n <- seq(1, 25, 2)
+plot(n, sapply(n, winprob))
+```
 (@) Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is between 61 and 67 inches?
+```{r}
+pnorm(67,mean=64,sd = 3)-pnorm(61,mean=64,sd = 3)
+```
+
 
 (@) Imagine the distribution of male adults is approximately normal with an expected value of 69 and a standard deviation of 3. How tall is the male in the 99th percentile? Hint: use `qnorm`.
 
+```{r}
+qnorm(0.99,mean = 69,sd=3)
+```
+
 (@) The distribution of IQ scores is approximately normally distributed. The average is 100 and the standard deviation is 15. Suppose you want to know the distribution of the highest IQ across all graduating classes if 10,000 people are born each in your school district. Run a Monte Carlo simulation with `B=1000` generating 10,000 IQ scores and keeping the highest. Make a histogram.
+```{r}
+B <- 1000
+maxIQ <- replicate(B, {
+  x <- rnorm(10000, mean = 100, sd = 15)
+  max(x)
+})
+hist(maxIQ)
+```
+
 
 (@) In American Roulette you can also bet on green. There are 18 reds, 18 blacks and 2 greens (0 and 00). What are the chances the green comes out?
+1/19
+```{r}
+p<-1/19
+```
+
 
 (@) The payout for winning on green is \$17 dollars. This means that if you bet a dollar and it lands on green, you get \$17. Create a sampling model using sample to simulate the random variable $X$ for your winnings. 
 ```{r}
-sample(c(-1,17), size =1, prob = c(18/19,1/19))
+sample(c(-1,17), size =1, prob = c(1-p,p))
 ```
 
 (@) Compute the expected value of $X$.
 ```{r}
--1*18/19+17*18/19
+miu <- -1*18/19+17*18/19
 ```
 
 (@) Compute the standard error of $X$.
 ```{r}
-18*sqrt(18/19*1/19)
+18 * sqrt(p * (1-p))
+```
+```{r}
+1*18/19+(17^2)*18/19 - (-1*18/19+17*18/19)^2
 ```
 
 
 (@) Now create a random variable $S$ that is the sum of your winnings after betting on green 1000 times.
 ```{r}
-n = 1000
-x <- sample(c(-1,17), size =n, prob = c(18/19,1/19),replace = T)
+n <- 1000
+x <- sample(c(-1, 17), size = n, replace = TRUE, prob = c(1-p, p))
+sum(x)
 ```
 
 (@) What is the expected value of $S$?
 ```{r}
-p = 1/19
-miu = n*p
+mu <- n * (-1 * (1-p) + 17*p)
+mu
 ```
 
 
 (@) What is the standard error of $S$?
 ```{r}
-se = sqrt(n)*sqrt(18*p*(1-p))
+se = sqrt(n)*18 * sqrt(p * (1-p))
+se
 ```
 
 
 (@) Use CLT to estimate the probability that you end up winning money? 
 ```{r}
-pnorm(-miu/se)
+1 - pnorm(-mu/se)
 ```
 
 
 (@) Create a Monte Carlo simulation that generates 1,000 outcomes of $S$. Compute the average and standard deviation of the resulting list to confirm the results of 6 and 7. 
+```{r}
+ss <- replicate(10^5, {
+  s <- sample(c(-1,17), size =1000, replace = T, prob = c(1-p,p))
+  sum(s)
+  })
+mean(ss)
+sd(ss)
+```
 
 
 (@) Now check your answer based on CLT using the Monte Carlo result.
 
 
-
+```{r}
+mean(S > 0)
+```
