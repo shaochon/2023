@@ -38,7 +38,7 @@ The probability can be thought of as taking $n$ samples over and over again, for
 
 ```{r}
 n <- 25
-B <- 10^5
+B <- 10^3
 replicate(B,{
   bdays <- sample(1:365, size = n, replace = TRUE)
   any(duplicated(bdays))
@@ -140,7 +140,7 @@ We can use math to compute the probability above, but we will instead use a Mont
 We can see the distribution of $S$ by randomly generating it an infinite number of times. Let's approximate with 100,000 and look at the distribution of $S$
 
 ```{r}
-s <- replicate(10^5,{
+s <- replicate(10^3,{
   x <- sample(c(-1, 1), size = 1000, replace = TRUE, prob = c(9/19, 10/19))
   sum(x)
 })
@@ -268,7 +268,7 @@ n <- ceiling((-sigma/mu*qnorm(0.01))^2)
 
 ```{r}
 ## Hint: copy and paste one of the previous Monte Carlo simulations and change n
-s <- replicate(10^5,{
+s <- replicate(10^3,{
   x <- sample(c(-1, 1), size = n, replace = TRUE, prob = c(9/19, 10/19))
   sum(x)
 })
@@ -316,7 +316,7 @@ CLT says $S_n$ should follow a normal distribution. Let's run Monte Carlo to che
 
 ```{r}
 s <- replicate(10^3,{
-  x <- sample(c(0, 1), size = 5*10^5, replace = TRUE, 
+  x <- sample(c(0, 1), size = 5*10^3, replace = TRUE, 
               prob = c(1 - 10^-6, 10^-6))
   sum(x)
 })
@@ -349,7 +349,7 @@ dpois(0:3, 0.5)
 
 ```{r}
 p <- 0.04 #default prob
-s <- replicate(10^5,{
+s <- replicate(10^3,{
   x <- sample(c(-200000, 10000), size = 10000, replace = TRUE, prob = c(p, 1-p))
   sum(x)
 })
@@ -358,7 +358,7 @@ hist(s)
 
 ```{r}
 p <- 0.04 #default prob
-s <- replicate(10^5,{
+s <- replicate(10^3,{
   p <- 0.04 + runif(1, -0.02, 0.02)
   x <- sample(c(-200000, 10000), size = 10000, replace = TRUE, prob = c(p, 1 - p))
   sum(x)
@@ -383,8 +383,8 @@ Use Monte Carlo simulations to answer these questions. Feel free to confirm usin
 
 (@) Two teams, say the Celtics and the Cavs, are playing a seven game series. The Cavs are a better team and have a 60% chance of winning each game. What is the probability that the Celtics win **at least** one game? Use a Monte Carlo simulation to compute (or confirm) your answer.
 ```{r}
-n <- 10^5
-b <- 10^5
+n <- 10^3
+b <- 10^3
 nowins <- replicate(b, {
   x <- sample(c(0, 1), size = 4, replace = TRUE, prob = c(0.6, 0.4))
   sum(x) == 0
@@ -394,7 +394,7 @@ nowins <- replicate(b, {
 
 (@) Two teams, say the Cavs and the Warriors, are playing a seven game championship series. The first to win four games, therefore, wins the series. The teams are equally good so they each have a 50-50 chance of winning each game. If the Cavs lose the first game, what is the probability that they win the series?
 ```{r}
-samples <- replicate(10^5,{
+samples <- replicate(10^3,{
   c = 0
   w = 1
   while(c<4&w<4){
@@ -412,7 +412,7 @@ mean(samples)
 ```
 
 ```{r}
-cavswins <- replicate(10^5, {
+cavswins <- replicate(10^3, {
   x <- sample(c(0, 1), size = 6, replace = TRUE, prob = c(0.5, 0.5))
   sum(x) >= 4
 })
@@ -430,14 +430,14 @@ winprob <- function(p) {
  mean(nowins)
 }
 p <- seq(0.5, 0.95, 0.025)
-plot(p, sapply(p, winprob))
+plot(p, sapply(p, winprob),ylab = 'winprob')
 ```
 
 (@) Repeat the exercise above, but now keep the probability fixed at `p <- 0.75` and compute the probability for different series lengths: best of 1 game, 3 games, 5 games,... Specifically, `n <- seq(1, 25, 2)`. 
 
 ```{r}
 winprob <- function(n) {
-  nowins <- replicate(10^5, {
+  nowins <- replicate(10^3, {
     x <- sample(c(0, 1), size = n, replace = TRUE, prob = c(0.75, 0.25))
     sum(x) >= ceiling(n/2)
   })
@@ -488,19 +488,14 @@ miu <- -1*18/19+17*18/19
 
 (@) Compute the standard error of $X$.
 ```{r}
-<<<<<<< Updated upstream
+
 18 * sqrt(p * (1-p))
-```
-```{r}
-1*18/19+(17^2)*18/19 - (-1*18/19+17*18/19)^2
-=======
-sqrt(1 * 18/19 + 17^2/19 - (-1 * 18/19 + 1*17/19)^2)
 ```
 
 ```{r}
-18 * sqrt(18/19*1/19)
->>>>>>> Stashed changes
+sqrt(1 * 18/19 + 17^2/19 - (-1 * 18/19 + 1*17/19)^2)
 ```
+
 
 
 (@) Now create a random variable $S$ that is the sum of your winnings after betting on green 1000 times.
@@ -532,7 +527,7 @@ se
 
 (@) Create a Monte Carlo simulation that generates 1,000 outcomes of $S$. Compute the average and standard deviation of the resulting list to confirm the results of 6 and 7. 
 ```{r}
-ss <- replicate(10^5, {
+ss <- replicate(10^3, {
   s <- sample(c(-1,17), size =1000, replace = T, prob = c(1-p,p))
   sum(s)
   })
@@ -545,5 +540,5 @@ sd(ss)
 
 
 ```{r}
-mean(S > 0)
+mean(ss > 0)
 ```

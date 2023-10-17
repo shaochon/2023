@@ -1104,7 +1104,7 @@ exp_ps + c(-1,1)*1.96*sd_ps
 
 (@) According to this analysis, what was the probability that Trump wins Florida?
 ```{r}
-1 - pnorm(0,mean=exp_ps,sd=sd_ps)
+pnorm(0,mean=exp_ps,sd=sd_ps)
 ```
 
 
@@ -1119,7 +1119,7 @@ prob <- sapply(seq(0.005, 0.05, len = 100), function(p){
   B<- sigma^2/(sigma^2 +tau^2)
   exp_ps <- B *mu + (1-B) * Y
   sd_ps <- sqrt(1/(1/sigma^2 +1/tau^2))
-  1 - pnorm(0,mean=exp_ps,sd=sd_ps)
+  pnorm(0,mean=exp_ps,sd=sd_ps)
 })
 
 plot(seq(0.005, 0.05, len = 100),prob)
@@ -1157,6 +1157,7 @@ filter(Batting, yearID %in% 2010:2012) |>
   geom_histogram(color = "black", binwidth = .01) +
   facet_wrap( ~ yearID)
 ```
+
 ```{r}
 r <- filter(Batting, yearID %in% 2010:2012) |>
   mutate(AVG = H/AB) |>
