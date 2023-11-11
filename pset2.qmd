@@ -323,7 +323,7 @@ counts
 
 ```{r}
 cuts <- c(seq(0,85,5), Inf)
-labels <- paste0(head(cuts, -1), "-", tail(cuts,-1))
+labels <- paste0(head(cuts, -1), "-", tail(cuts,-1)-1)
 cut(0:100, cuts, right = FALSE, labels = labels) ## to see how it works
 ```
 
@@ -336,16 +336,13 @@ population <- population |>
   summarize(population = sum(pop), .groups = "drop")
 ```
 
-```{r}
-population
-```
-
 
 (@) Add a population column to `counts` using the `population` data frame you just created.
 ```{r}
 counts <- counts |> 
   mutate(year = year(date)) |> 
-  merge(population, by.x = c("year","sex",'agegroup'), by.y = c("year","sex",'agegroup'))
+  left_join(population,by = c('year','sex','agegroup'))|>
+  select(year,sex,date,agegroup,outcome,population)
 ```
 
 (@) Use R to determine what day of the week did María make landfall in PR.
@@ -355,43 +352,45 @@ counts <- counts |>
 wday("2017-09-20")
 ```
 
-
-#not sure
-```{r}
-# detect the day where there is a large increase in deaths counts
-maria_date <- counts |> 
-  group_by(date) |>
-  summarize(outcome = sum(outcome), .groups = "drop") |> 
-  mutate(diff = c(0, diff(outcome))) |> 
-  slice_max(diff) |>
-  pull(date)
-maria_date
-```
-
-(@) Make a plot of the monthly totals for 2002-2016. Add a red point for 2017. Comment on the possibility that indirect effect went past October.
-
-The indirect effect of the hurricane is likely to have lasted longer than October. 
-The red point is much higher than the other points in the plot.
-```{r}
-library(ggplot2)
-counts |> 
-  mutate(month = floor_date(date, "month")) |> 
-  group_by(month) |> 
-  summarize(outcome = sum(outcome), .groups = "drop") |> 
-  ggplot(aes(x = month, y = outcome)) +
-  geom_point()+
-  geom_vline(xintercept = make_date(year = 2017),col='red')  +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y, %b") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
-```
-
 (@) Redefine the date column to be the start of the week that day is part of. Use the day of the week María made landfall as the first day. Now collapse the data frame to weekly data by redefining `outcome` to have the total deaths that week for each sex and agegroup. Remove weeks that have less the 7 days. Finally, add a column with the MMWR week. Name the resulting data frame `weekly_counts`
+
+```{r}
+weekly_counts <- counts |> 
+  mutate(firstday = floor_date(date, "week", week_start = 3)) |>
+  group_by(firstday, sex,agegroup) |>
+  summarize(N = n(),
+            outcome = sum(outcome), 
+            population = unique(population)[[1]],
+            .groups = "drop") |>
+  filter(N==7)
+weekly_counts
+```
+
 
 
 (@) Make a per-week version of the plot we made for monthly totals. Make a boxplot for each week based on the 2002-2016 data, then add red points for 2017. Comment on the possibility that indirect effect went past October.
+```{r}
+weekly_counts |>
+  mutate(year = year(firstday)) |>
+  filter(year < 2017) |>
+  group_by(firstday) |>
+  summarize(outcome = sum(outcome), .groups = "drop") |>
+  ggplot(aes(x = firstday, y = outcome)) +
+  geom_boxplot()  +
+  labs(x = "Week", y = "Deaths per week")
+
+```
+
 
 
 (@) If we look at 2017 data before September and compare each week to the average from 2002-2016. What percent are below the median?
+```{r}
+weekly_counts |>
+  filter(firstday < "2017-09-20") |>
+  mutate(median = median(outcome)) |>
+  summarize(pct_below = mean(outcome < median))
+```
+
 
 
 (@) Why are 2017 totals somewhat below-average? Plot the population in millions against date. What do you see?
