@@ -534,7 +534,10 @@ avg <- Batting |>
          bb = sum(BB) / pa, .groups = 'drop') |>
   filter(pa >= 100) |>
   select(playerID, singles, bb)
+<<<<<<< Updated upstream
 avg
+=======
+>>>>>>> Stashed changes
 ```
 
 (@) You can use the `inner_join` function to combine the 2001 data and averages in the same table:
@@ -546,8 +549,11 @@ colnames(dat) <- c("playerID", "singles.2002", "bb.2002", "singles.1999_2001", "
 Compute the correlation between 2002 and the previous seasons for singles and BB.
 ```{r}
 cor(dat$singles.2002, dat$singles.1999_2001)
+<<<<<<< Updated upstream
 ```
 ```{r}
+=======
+>>>>>>> Stashed changes
 cor(dat$bb.2002, dat$bb.1999_2001)
 ```
 
@@ -570,6 +576,15 @@ confint(lm_bb)
 ```{r}
 ```
 
+```{r}
+lm_singles <- lm(singles.2002 ~ singles.1999_2001, data = dat)
+confint(lm_singles)
+
+lm_bb <- lm(bb.2002 ~ bb.1999_2001, data = dat)
+confint(lm_bb)
+```
+The confidence interval for the slope coefficient is much narrower for BB. 
+This is because the correlation is higher.
 
 (@) We cam compute the correlation between mothers and daughters, mothers and sons, fathers and daughters, and fathers and sons (we randomly pick one offspring) using the following:
 
@@ -587,23 +602,111 @@ cors <- galton_heights |>
   unite(pair, c("parent", "child")) |> 
   group_by(pair) |>
   summarize(cor = cor(parentHeight, childHeight))
+cors
 ```
 
 Are these differences statistically significant? To answer this, we will compute the slopes of the regression line along with their standard errors. Start by using `lm` and the **broom** package to compute the slopes LSE and the standard errors.
 
+```{r}
+galton_heights |> 
+  pivot_longer(father:mother, names_to = "parent", values_to = "parentHeight") |>
+  mutate(child = ifelse(gender == "female", "daughter", "son")) |>
+  unite(pair, c("parent", "child")) |> 
+  group_by(pair) |>
+  do(tidy(lm(childHeight ~ parentHeight, data = .)))
+```
+
 (@) Repeat the exercise above, but compute a confidence interval as well.
+```{r}
+models <- galton_heights |> 
+  pivot_longer(father:mother, names_to = "parent", values_to = "parentHeight") |>
+  mutate(child = ifelse(gender == "female", "daughter", "son")) |>
+  unite(pair, c("parent", "child")) |> 
+  group_by(pair) |>
+  do(tidy(lm(childHeight ~ parentHeight, data = .), conf.int = TRUE))
+```
 
 (@) Plot the confidence intervals and notice that they overlap, which implies that the data is consistent with the inheritance of height being independent of sex.
 
-(@) Because we are selecting children at random, we can actually do something like a permutation test here. Repeat the computation of correlations 100 times taking a different sample each time. Hint: use similar code to what we used with simulations.
+```{r}
+models |> 
+  filter(term == "parentHeight") |>
+  select(pair, estimate, conf.low, conf.high) |>
+  ggplot(aes(pair, estimate)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
+  coord_flip()
+```
 
-(@) Use the `Teams` dataset to fit a linear regression model to obtain the effects of BB and HR on Runs (at the team level) in 1971. Use the `tidy` function in the **broom** package to obtain the results in a data frame. 
+(@) Now let's repeat the above for the `Teams` dataset. We will fit a linear regression model to obtain the effects of BB and HR on Runs (at the team level) in 1971. Use the `tidy` function in the **broom** package to obtain the results in a data frame. 
+
+```{r}
+Teams |> 
+  filter(yearID == 1971) |>
+  select(R, BB, HR) |>
+  do(tidy(lm(R ~ BB + HR, data = .)))
+```
 
 (@) Now let's repeat the above for each year since 1962 and make a plot. Use `summarize` and the **broom** package to fit this model for every year since 1962.
 
+```{r}
+# Fit the model for every year since 1962 and tidy the results
+make_model <- function(data){
+  lm(R ~ BB + HR, data=data)
+}
+
+models <- Teams |>
+  filter(yearID >= 1962) |>
+  group_by(yearID) |>
+  nest() |>
+  summarise(lm = map(data, make_model),.groups = 'drop') |>
+  mutate(tidy = map(lm,
+                    broom::tidy)) |>
+  unnest(tidy) |>
+  select(yearID, term, estimate, std.error) 
+```
+
 (@) Use the results of the previous exercise to plot the estimated effects of BB on runs.
 
-(@) Write a function that takes R, HR, and BB as arguments and fits two linear models: `R ~ BB` and `R~BB+HR`. Then use the `summary` function to obtain the `BB` for both models for each year since 1962. Then plot these against each other as a function of time.
+```{r}
+models |>
+  filter(term == 'BB') |>
+ggplot( aes(x = yearID, y = estimate)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = estimate - std.error, ymax = estimate + std.error), alpha = 0.2) +
+  theme_minimal() +
+  labs(title = "Estimated Effect of BB and HR on R from 1962 to Present",
+       x = "Year",
+       y = "Estimated Effect") 
+```
+
+(@) Write a function that takes R, HR, and BB as arguments and fits two linear models: `R ~ BB` and `R~BB+HR`. Then use the `summary` function to obtain the BB for both models for each year since 1962. Then plot these against each other as a function of time.
+
+```{r}
+make_lm_model <- function(data){
+  model1 <- lm(R ~ BB, data=data)
+  model2 <- lm(R ~ BB + HR, data=data)
+  
+  bb1 <- summary(model1)$coefficients[2,1]
+  bb2 <- summary(model2)$coefficients[2,1]
+  return(tibble(BB_coefficient_model1 = bb1, BB_coefficient_model2 = bb2))
+}
+
+bb_models <- Teams |>
+  filter(yearID >= 1962) |>
+  group_by(yearID) |>
+  nest() |>
+  summarise(coefs = map(data, make_lm_model),.groups = 'drop') |>
+  unnest(coefs) 
+
+ggplot(data = bb_models, aes(x = yearID)) +
+  geom_line(aes(y = BB_coefficient_model1, color = "Model 1: R ~ BB")) +
+  geom_line(aes(y = BB_coefficient_model2, color = "Model 2: R ~ BB + HR")) +
+  labs(title = "BB Coefficients Over Time",
+       x = "Year",
+       y = "BB Coefficient",
+       color = "Model") 
+```
 
 
 ## Optional Exercises (will not appear in midterm)
