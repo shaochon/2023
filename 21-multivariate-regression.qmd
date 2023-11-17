@@ -534,14 +534,10 @@ avg <- Batting |>
          bb = sum(BB) / pa, .groups = 'drop') |>
   filter(pa >= 100) |>
   select(playerID, singles, bb)
-<<<<<<< Updated upstream
-avg
-=======
->>>>>>> Stashed changes
 ```
 
 (@) You can use the `inner_join` function to combine the 2001 data and averages in the same table:
-```{r, eval = FALSE}
+```{r}
 dat <- inner_join(dat, avg, by = "playerID")
 colnames(dat) <- c("playerID", "singles.2002", "bb.2002", "singles.1999_2001", "bb.1999_2001")
 ```
@@ -549,11 +545,7 @@ colnames(dat) <- c("playerID", "singles.2002", "bb.2002", "singles.1999_2001", "
 Compute the correlation between 2002 and the previous seasons for singles and BB.
 ```{r}
 cor(dat$singles.2002, dat$singles.1999_2001)
-<<<<<<< Updated upstream
-```
-```{r}
-=======
->>>>>>> Stashed changes
+
 cor(dat$bb.2002, dat$bb.1999_2001)
 ```
 
@@ -573,8 +565,6 @@ confint(lm_bb)
 ```
 
 (@) We see that the confidence interval for the slope coefficient is much narrower for BB. This is because the correlation is higher and the sample size is larger. We can also use the bootstrap to compute confidence intervals for the correlation. Here is how we can do this for singles:
-```{r}
-```
 
 ```{r}
 lm_singles <- lm(singles.2002 ~ singles.1999_2001, data = dat)
@@ -638,7 +628,36 @@ models |>
   coord_flip()
 ```
 
-(@) Now let's repeat the above for the `Teams` dataset. We will fit a linear regression model to obtain the effects of BB and HR on Runs (at the team level) in 1971. Use the `tidy` function in the **broom** package to obtain the results in a data frame. 
+(@) Because we are selecting children at random, we can actually do something like a permutation test here. Repeat the computation of correlations 100 times taking a different sample each time. Hint: use similar code to what we used with simulations.
+
+```{r}
+permutation <- function(){
+  cor <- GaltonFamilies |>
+  group_by(family, gender) |>
+  sample_n(1) |>
+  ungroup() |> 
+  pivot_longer(father:mother, names_to = "parent", values_to = "parentHeight") |>
+  mutate(child = ifelse(gender == "female", "daughter", "son")) |>
+  unite(pair, c("parent", "child")) |> 
+  group_by(pair) |>
+  summarize(cor = cor(parentHeight, childHeight)) 
+  
+  cor$cor
+  }
+
+cors <- replicate(100, permutation()) |> as.tibble()
+cors$name <- c("father_daughter","father_son","mother_daughter","mother_son" )
+
+```
+
+```{r}
+cors |>
+  # transpose the tibble
+  column_to_rownames("name") 
+
+```
+
+(@) Use the Teams dataset to fit a linear regression model to obtain the effects of BB and HR on Runs (at the team level) in 1971. Use the tidy function in the broom package to obtain the results in a data frame.
 
 ```{r}
 Teams |> 
@@ -664,6 +683,14 @@ models <- Teams |>
                     broom::tidy)) |>
   unnest(tidy) |>
   select(yearID, term, estimate, std.error) 
+
+
+ggplot(models, aes(x = yearID, y = estimate, color = term)) +
+  geom_point() +
+  labs(title = "Effects of BB and HR on Runs Since 1962",
+       x = "Year",
+       y = "Regression Coefficient Estimate") + 
+  facet_wrap(~term, scales = "free_y")
 ```
 
 (@) Use the results of the previous exercise to plot the estimated effects of BB on runs.
@@ -696,7 +723,7 @@ bb_models <- Teams |>
   filter(yearID >= 1962) |>
   group_by(yearID) |>
   nest() |>
-  summarise(coefs = map(data, make_lm_model),.groups = 'drop') |>
+  summarize(coefs = map(data, make_lm_model),.groups = 'drop') |>
   unnest(coefs) 
 
 ggplot(data = bb_models, aes(x = yearID)) +
