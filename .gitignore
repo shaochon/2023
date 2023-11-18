@@ -5,7 +5,12 @@
 /*_files
 *.sh
 .DS_Store
+<<<<<<< Updated upstream
 pset2.qmd
 census-key.R
 pset2.qmd
+=======
+*with-solutions*
+census-key.R 
+>>>>>>> Stashed changes
 .Rhistory
