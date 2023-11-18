@@ -436,7 +436,7 @@ x <- rbinom(N, 1, 0.5)
 
 Then compute a p-value testing if $p=0.5$. Repeat this 10,000 times and report how often do we incorrectly is the p-value lower than 0.05? How often is it lower than 0.01?
 ```{r}
-N <- 50
+N <- 5000
 p <- 0.5
 pval <- replicate(10000, {
   x <- rbinom(N, 1, 0.5)
@@ -454,11 +454,10 @@ mean(pval < 0.01)
   c. The p-values are uniformly distributed
   d. The p-values 
 
-b
+c
 ```{r}
 hist(pval)
 ```
-
 
 
 (@)  Generate a sample of size $N=50$ from an urn model with 52% blue beads:
