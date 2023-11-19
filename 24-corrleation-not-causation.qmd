@@ -340,8 +340,11 @@ totals <- research_funding_rates |>
 totals
 
 two_by_two <- with(totals, data.frame(awarded = c("no", "yes"), 
-                                      men = c(no_award_men, awards_men),
-                                      women = c(no_award_women, awards_women)))
+                                      men = c(no_men, yes_men),
+                                      women = c(no_women, yes_women)))
+# |>
+#   # convert to percentange
+#   mutate_at(vars(-awarded), ~./sum(.)) 
 two_by_two
 ```
 
@@ -359,20 +362,24 @@ chisq.test(two_by_two[,-1])
 
 (@) We see that the p-value is about 0.05. So there appears to be some evidence of an association. But can we infer causation here? Is gender bias causing this observed difference? The response to the original paper claims that what we see here is similar to the UC Berkeley admissions example. Specifically they state that this "could be a prime example of Simpson's paradox; if a higher percentage of women apply for grants in more competitive scientific disciplines, then an analysis across all disciplines could incorrectly show 'evidence' of gender inequality." To settle this dispute, create a dataset with number of applications, awards, and success rate for each gender. Re-order the disciplines by their overall success rate. Hint: use the `reorder` function to re-order the disciplines in a first step, then use `pivot_longer`, `separate`, and `pivot_wider` to create the desired table.
 ```{r}
-research_funding_rates |>
+dat <- research_funding_rates |>
   select(discipline,applications_men,applications_women,awards_men,awards_women,success_rates_men,success_rates_women,success_rates_total) |>
   mutate(discipline = reorder(discipline, success_rates_total, descreasing = TRUE)) |>
-  pivot_longer(applications_men:success_rates_women) |>
-  separate(name, into = c('type','sex'), '_' )
+  rename(success_men = success_rates_men,
+         success_women = success_rates_women,
+         success_total = success_rates_total) |>
+  pivot_longer(applications_men:success_total) |>
+  separate(name,c("type","gender")) |>
+  pivot_wider(names_from = type,values_from = value) |>
+  filter(gender != "total")
 ```
-
 
 (@) To check if this is a case of Simpson's paradox, plot the success rates versus disciplines, which have been ordered by overall success, with colors to denote the genders and size to denote the number of applications.
 ```{r}
-research_funding_rates |>
-  mutate(discipline = reorder(discipline, success_rates_total, descreasing = TRUE)) |>
-  ggplot(aes(x=discipline,y=success_rates_total, col=sex)) +
-  geom_line()
+dat |>
+  ggplot(aes(x=discipline,y=success, col=gender, size = applications)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
 ```
 
 
@@ -380,4 +387,31 @@ research_funding_rates |>
 
 But, before we conclude this, we must check if these differences are any different than what we get by chance. Are any of the differences seen above statistically significant? Keep in mind that even when there is no bias, we will see differences due to random variability in the review process as well as random variability across candidates. Perform a Chi-square test for each discipline. Hint: define a function that receives the total of a two-by-two table and returns a data frame with the p-value. Use the 0.5 correction. Then use the `summarize` function.
 
+```{r}
+chisq_test <- function(x){
+  chisq.test(x,correct = TRUE)$p.value
+}
+
+dat |> 
+  group_by(discipline) |>
+  nest() |>
+  summarize(p_value = map(data,~chisq_test(.x[,c('applications','awards')]))) |>
+  unnest(p_value) 
+```
+
+
+
 (@) For the medical sciences, there appears to be a statistically significant difference. But is this a spurious correlation? We performed 9 tests. Reporting only the one case with a p-value less than 0.05 might be considered an example of cherry picking. Repeat the exercise above, but instead of a p-value, compute a log odds ratio divided by their standard error. Then use qq-plot to see how much these log odds ratios deviate from the normal distribution we would expect: a standard normal distribution.
+
+```{r}
+get_log_odds <- function(m,x,n,y) {
+  log(x/(m-x)/(y/(n-y)))/sqrt(1/m + 1/x + 1/n +1/y)
+}
+
+research_funding_rates |>
+#  group_by(discipline)|>
+  mutate(stat = get_log_odds(applications_men, awards_men,
+                             applications_women,awards_women))|>
+  ggplot(aes(sample = scale(stat)))+ stat_qq() + geom_abline()
+```
+
