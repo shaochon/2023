@@ -321,7 +321,7 @@ A response[^association-not-causation-4] was published a few months later titled
 
 Who is right here? The original paper or the response? Here, you will examine the data and come to your own conclusion.
 
-(@) The main evidence for the conclusion of the original paper comes down to a comparison of the percentages. Table S1 in the paper includes the information we need:
+(@) 1. The main evidence for the conclusion of the original paper comes down to a comparison of the percentages. Table S1 in the paper includes the information we need:
 
 ```{r,eval=FALSE}
 library(dslabs)
@@ -342,25 +342,23 @@ totals
 two_by_two <- with(totals, data.frame(awarded = c("no", "yes"), 
                                       men = c(no_men, yes_men),
                                       women = c(no_women, yes_women)))
-# |>
-#   # convert to percentange
-#   mutate_at(vars(-awarded), ~./sum(.)) 
+
 two_by_two
 ```
 
 
-(@) Compute the difference in percentage from the two-by-two table.
+(@) 2. Compute the difference in percentage from the two-by-two table.
 ```{r}
 with(two_by_two,men[2]/(men[1]+men[2]) - women[2]/(women[1]+women[2]))
 ```
 
 
-(@) In the previous exercise, we noticed that the success rate is lower for women. But is it significant? Compute a p-value using a Chi-square test.
+(@) 3. In the previous exercise, we noticed that the success rate is lower for women. But is it significant? Compute a p-value using a Chi-square test.
 ```{r}
 chisq.test(two_by_two[,-1])
 ```
 
-(@) We see that the p-value is about 0.05. So there appears to be some evidence of an association. But can we infer causation here? Is gender bias causing this observed difference? The response to the original paper claims that what we see here is similar to the UC Berkeley admissions example. Specifically they state that this "could be a prime example of Simpson's paradox; if a higher percentage of women apply for grants in more competitive scientific disciplines, then an analysis across all disciplines could incorrectly show 'evidence' of gender inequality." To settle this dispute, create a dataset with number of applications, awards, and success rate for each gender. Re-order the disciplines by their overall success rate. Hint: use the `reorder` function to re-order the disciplines in a first step, then use `pivot_longer`, `separate`, and `pivot_wider` to create the desired table.
+(@) 4. We see that the p-value is about 0.05. So there appears to be some evidence of an association. But can we infer causation here? Is gender bias causing this observed difference? The response to the original paper claims that what we see here is similar to the UC Berkeley admissions example. Specifically they state that this "could be a prime example of Simpson's paradox; if a higher percentage of women apply for grants in more competitive scientific disciplines, then an analysis across all disciplines could incorrectly show 'evidence' of gender inequality." To settle this dispute, create a dataset with number of applications, awards, and success rate for each gender. Re-order the disciplines by their overall success rate. Hint: use the `reorder` function to re-order the disciplines in a first step, then use `pivot_longer`, `separate`, and `pivot_wider` to create the desired table.
 ```{r}
 dat <- research_funding_rates |>
   select(discipline,applications_men,applications_women,awards_men,awards_women,success_rates_men,success_rates_women,success_rates_total) |>
@@ -374,7 +372,7 @@ dat <- research_funding_rates |>
   filter(gender != "total")
 ```
 
-(@) To check if this is a case of Simpson's paradox, plot the success rates versus disciplines, which have been ordered by overall success, with colors to denote the genders and size to denote the number of applications.
+(@) 5. To check if this is a case of Simpson's paradox, plot the success rates versus disciplines, which have been ordered by overall success, with colors to denote the genders and size to denote the number of applications.
 ```{r}
 dat |>
   ggplot(aes(x=discipline,y=success, col=gender, size = applications)) +
@@ -383,7 +381,7 @@ dat |>
 ```
 
 
-(@) We definitely do not see the same level of confounding as in the UC Berkeley example. It is hard to say there is a confounder here. However, we do see that, based on the observed rates, some fields favor men and others favor women and we do see that the two fields with the largest difference favoring men are also the fields with the most applications. But, unlike the UC Berkeley example, women are not more likely to apply for the more challenging fields. So perhaps some of the selection committees are biased and others are not.
+(@) 6. We definitely do not see the same level of confounding as in the UC Berkeley example. It is hard to say there is a confounder here. However, we do see that, based on the observed rates, some fields favor men and others favor women and we do see that the two fields with the largest difference favoring men are also the fields with the most applications. But, unlike the UC Berkeley example, women are not more likely to apply for the more challenging fields. So perhaps some of the selection committees are biased and others are not.
 
 But, before we conclude this, we must check if these differences are any different than what we get by chance. Are any of the differences seen above statistically significant? Keep in mind that even when there is no bias, we will see differences due to random variability in the review process as well as random variability across candidates. Perform a Chi-square test for each discipline. Hint: define a function that receives the total of a two-by-two table and returns a data frame with the p-value. Use the 0.5 correction. Then use the `summarize` function.
 

@@ -330,10 +330,15 @@ d.  We should use the Fisher exact test to get confidence intervals.
 (@) Multiply the two-by-two table by 2 and see if the p-value and confidence retrieval are a better match.
 ```{r}
 mat <- mat*2
-chisq.test(mat)$p.value
+chisq.test(mat,correct=TRUE)$p.value
+chisq.test(mat,correct=FALSE)$p.value
+
 lor <- log((mat[1,1]*mat[2,2])/(mat[1,2]*mat[2,1]))
 se <- sqrt(sum(1/mat))
 2*pnorm(-abs(lor/se))
+
+summary(glm(mat ~ c(1,0), family = "binomial"))$coef[2,4]
+
 ```
 
 
