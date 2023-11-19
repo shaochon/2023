@@ -521,7 +521,6 @@ dat <- Batting |> filter(yearID == 2002) |>
          singles = (H - X2B - X3B - HR) / pa, bb = BB / pa) |>
   filter(pa >= 100) |>
   select(playerID, singles, bb)
-dat
 ```
 
 Now compute a similar table but with rates computed over 1999-2001.
@@ -529,9 +528,9 @@ Now compute a similar table but with rates computed over 1999-2001.
 avg <- Batting |> 
   filter(yearID %in% 1999:2001) |>
   group_by(playerID) |>
-  summarise(pa = sum(AB + BB), 
-         singles = sum(H - X2B - X3B - HR) / pa, 
-         bb = sum(BB) / pa, .groups = 'drop') |>
+  summarise(pa = mean(AB + BB), 
+         singles = mean(H - X2B - X3B - HR) / pa, 
+         bb = mean(BB) / pa, .groups = 'drop') |>
   filter(pa >= 100) |>
   select(playerID, singles, bb)
 ```
@@ -647,13 +646,6 @@ permutation <- function(){
 
 cors <- replicate(100, permutation()) |> as.tibble()
 cors$name <- c("father_daughter","father_son","mother_daughter","mother_son" )
-
-```
-
-```{r}
-cors |>
-  # transpose the tibble
-  column_to_rownames("name") 
 
 ```
 
