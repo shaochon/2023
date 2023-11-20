@@ -465,7 +465,7 @@ hist(pval)
 ```{r, eval=FALSE}
 N <- 50 
 p <- 0.52
-x <- rbinom(N, 1, 0.52)
+x <- rbinom(N, 1, 0.5)
 ```
 
 Then compute a p-value testing if $p=0.5$. Repeat this 10,000 times and report how often do we incorrectly is the p-value larger than 0.05? Note that you are computing 1 - power. 
@@ -473,7 +473,7 @@ Then compute a p-value testing if $p=0.5$. Repeat this 10,000 times and report h
 N <- 50
 p <- 0.52
 pval <- replicate(10000, {
-  x <- rbinom(N, 1, p)
+  x <- rbinom(N, 1, 0.5)
   binom.test(sum(x), N, p = 0.5)$p.value
 })
 mean(pval > 0.05)
@@ -489,19 +489,18 @@ pval <- replicate(10000, {
   x <- rbinom(N, 1, p)
   binom.test(sum(x), N, p = 0.5)$p.value
 })
-mean(pval <= 0.05)
+mean(pval > 0.05)
 }
 
-values$power <- mapply(power_func, values$N, values$p)
+values$type2 <- mapply(power_func, values$N, values$p)
 values
 ```
 
 Plot power as a function of $N$ with a different color curve for each value of `p`.
 ```{r}
 values |>
-  ggplot(aes(x = N, y = power, color = factor(p))) +
+  ggplot(aes(x = N, y = 1-type2, color = factor(p))) +
   geom_line()
-
 ```
 
 
