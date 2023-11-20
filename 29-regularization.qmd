@@ -486,7 +486,7 @@ knitr::kable(rmse_results, "html") |>
 
 ## Exercises 
 
-(@) For the  `movielens` data, compute the number of ratings for each movie and then plot it against the year the movie came out. Use the square root transformation on the counts.
+(@) 1. For the  `movielens` data, compute the number of ratings for each movie and then plot it against the year the movie came out. Use the square root transformation on the counts.
 ```{r}
 data(movielens)
 movielens |>
@@ -496,7 +496,7 @@ movielens |>
   geom_point(alpha = 0.5) 
 ```
 
-(@) We see that, on average, movies that came out after 1993 get more ratings. We also see that with newer movies, starting in 1993, the number of ratings decreases with year: the more recent a movie is, the less time users have had to rate it. 
+(@) 2. We see that, on average, movies that came out after 1993 get more ratings. We also see that with newer movies, starting in 1993, the number of ratings decreases with year: the more recent a movie is, the less time users have had to rate it. 
 
 Among movies that came out in 1993 or later, what are the 25 movies with the most ratings per year? Also report their average rating.
 
@@ -516,8 +516,7 @@ movie25 <- movielens |>
 movie25
 ```
 
-
-(@) From the table constructed in the previous example, we see that the most rated movies tend to have above average ratings. This is not surprising: more people watch popular movies. To confirm this, stratify the post 1993 movies by ratings per year and compute their average ratings. Make a plot of average rating versus ratings per year and show an estimate of the trend.
+(@) 3. From the table constructed in the previous example, we see that the most rated movies tend to have above average ratings. This is not surprising: more people watch popular movies. To confirm this, stratify the post 1993 movies by ratings per year and compute their average ratings. Make a plot of average rating versus ratings per year and show an estimate of the trend.
 
 ```{r}
  movielens |>
@@ -530,16 +529,15 @@ movie25
   mutate(years_since_release = as.integer(format(Sys.Date(), "%Y")) - release_year,
           ratings_per_year = n / years_since_release
   ) |>
-  arrange(desc(ratings_per_year))  |> 
   group_by(ratings_per_year) |>
-  summarize(avg_rating = mean(ratings)) |>
+  summarize(avg_rating = mean(ratings),.groups = 'drop') |>
   ggplot(aes(ratings_per_year, avg_rating)) +
   geom_point() +
   geom_smooth(method = "lm", color = "blue")
 ```
 
 
-(@) The `movielens` dataset also includes a time stamp. This variable represents the time and data in which the rating was provided. The units are seconds since January 1, 1970. Create a new column `date` with the date. Hint: use the `as_datetime` function in the __lubridate__ package.
+(@) 4. The `movielens` dataset also includes a time stamp. This variable represents the time and data in which the rating was provided. The units are seconds since January 1, 1970. Create a new column `date` with the date. Hint: use the `as_datetime` function in the __lubridate__ package.
 ```{r}
 library(lubridate)
 movielens <- movielens |>
@@ -547,7 +545,7 @@ movielens <- movielens |>
 ```
 
 
-(@) Compute the average rating for each week and plot this average against day. Hint: use the `round_date` function before you `group_by`.
+(@) 5. Compute the average rating for each week and plot this average against day. Hint: use the `round_date` function before you `group_by`.
 
 ```{r}
 library(lubridate)
@@ -561,7 +559,7 @@ movielens |>
 
 
 
-(@) The `movielens` data also has a `genres` column. This column includes every genre that applies to the movie. Some movies fall under several genres. Define a category as whatever combination appears in this column. Keep only categories with more than 1,000 ratings. Then compute the average and standard error for each category. Plot these as error bar plots.
+(@) 6. The `movielens` data also has a `genres` column. This column includes every genre that applies to the movie. Some movies fall under several genres. Define a category as whatever combination appears in this column. Keep only categories with more than 1,000 ratings. Then compute the average and standard error for each category. Plot these as error bar plots.
 ```{r}
 movielens |>
   separate_rows(genres, sep = "\\|") |>
@@ -575,7 +573,7 @@ movielens |>
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-(@) The plot shows strong evidence of a genre effect. If we define $g_{u,i}$ as the genre for user's $u$ rating of movie $i$, which of the following models is most appropriate:
+(@) 7. The plot shows strong evidence of a genre effect. If we define $g_{u,i}$ as the genre for user's $u$ rating of movie $i$, which of the following models is most appropriate:
 
 answer: c
 This model is a fixed-effects model that includes a separate effect for each genre. The term $x_{u,i}^k$ is an indicator for whether movie $i$ is of genre $k$, and $\beta_k$ represents the effect of genre $k$ on the rating. This model allows for different effects for each genre and is appropriate if the genre effect varies by genre.
@@ -623,26 +621,26 @@ schools <- schools |> mutate(score = sapply(scores, mean))
 ```
 
 
-(@) What are the top schools based on the average score? Show just the ID, size, and the average score.
+(@) 8. What are the top schools based on the average score? Show just the ID, size, and the average score.
 ```{r}
 schools |> top_n(10, score) |> arrange(desc(score)) |> select(id, size, score)
 ```
 
-(@) Compare the median school size to the median school size of the top 10 schools based on the score.
+(@) 9. Compare the median school size to the median school size of the top 10 schools based on the score.
 ```{r}
 median(schools$size)
 median(schools |> top_n(10, score) |> arrange(desc(score)) |> pull(size))
 ```
 
 
-(@) According to this test, it appears small schools are better than large schools. Five out of the top 10 schools have 100 or fewer students. But how can this be? We constructed the simulation so that quality and size are independent. Repeat the exercise for the worst 10 schools.
+(@) 10. According to this test, it appears small schools are better than large schools. Five out of the top 10 schools have 100 or fewer students. But how can this be? We constructed the simulation so that quality and size are independent. Repeat the exercise for the worst 10 schools.
 ```{r}
 median(schools |> top_n(-10, score) |> arrange(desc(score)) |> pull(size))
 
 schools |> top_n(-10, score) |> filter(size<=100)
 ```
 
-(@) The same is true for the worst schools! They are small as well. Plot the average score versus school size to see what's going on. Highlight the top 10 schools based on the _true_ quality. Use the log scale transform for the size.
+(@) 11. The same is true for the worst schools! They are small as well. Plot the average score versus school size to see what's going on. Highlight the top 10 schools based on the _true_ quality. Use the log scale transform for the size.
 ```{r}
 schools |> 
   mutate(sum = sapply(scores, mean)) |>
@@ -652,7 +650,7 @@ schools |>
   scale_x_log10()
 ```
 
-(@) We can see that the standard error of the score has larger variability when the school is smaller. This is a basic statistical reality we learned in the probability and inference sections. In fact, note that 4 of the top 10 schools are in the top 10 schools based on the exam score.
+(@) 12. We can see that the standard error of the score has larger variability when the school is smaller. This is a basic statistical reality we learned in the probability and inference sections. In fact, note that 4 of the top 10 schools are in the top 10 schools based on the exam score.
 
 Let's use regularization to pick the best schools. Remember regularization _shrinks_ deviations from the average towards 0. So to apply regularization here, we first need to define the overall average for all schools:
 
@@ -670,7 +668,7 @@ schools <- schools |>
 ```
 
 
-(@) Notice that this improves things a bit. The number of small schools that are not highly ranked is now 4.  Is there a better $\lambda$? Find the $\lambda$ that minimizes the RMSE = $1/100 \sum_{i=1}^{100} (\mbox{quality} - \mbox{estimate})^2$.
+(@) 13. Notice that this improves things a bit. The number of small schools that are not highly ranked is now 4.  Is there a better $\lambda$? Find the $\lambda$ that minimizes the RMSE = $1/100 \sum_{i=1}^{100} (\mbox{quality} - \mbox{estimate})^2$.
 
 ```{r, eval=FALSE}
 lambdas <- seq(0, 50, 0.1)
@@ -684,7 +682,7 @@ plot(lambdas, rmses, type = "l")
 ```
 
 
-(@) Rank the schools based on the average obtained with the best $\lambda$. Note that few small schools are incorrectly included in the top.
+(@)14.  Rank the schools based on the average obtained with the best $\lambda$. Note that few small schools are incorrectly included in the top.
 
 ```{r, eval=FALSE}
 lambda <- lambdas[which.min(rmses)]
@@ -695,7 +693,7 @@ schools |> arrange(desc(score_reg))
 ```
 
 
-(@)  A common mistake to make when using regularization is shrinking values towards 0 that are not centered around 0. For example, if we don't subtract the overall average before shrinking, we actually obtain a very similar result. Confirm this by re-running the code from exercise 6 but without removing the overall mean. 
+(@)15. A common mistake to make when using regularization is shrinking values towards 0 that are not centered around 0. For example, if we don't subtract the overall average before shrinking, we actually obtain a very similar result. Confirm this by re-running the code from exercise 6 but without removing the overall mean. 
 ```{r, eval=FALSE}
 lambdas <- seq(0, 50, 0.1)
 rmses <- sapply(lambdas, function(lambda){

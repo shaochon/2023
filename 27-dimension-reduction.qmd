@@ -608,16 +608,18 @@ pca$x[,1:2] |> as.data.frame() |>
 
 (@) The predictors for each observation are measured on the same measurement device (a gene expression microarray) after an experimental procedure. A different device and procedure is used for each observation. This may introduce biases that affect all predictors for each observation in the same way. To explore the effect of this potential bias, for each observation, compute the average across all predictors and then plot this against the first PC with color representing tissue. Report the correlation.
 ```{r}
-tibble(average = rowMeans(tissue_gene_expression$x),
-       PC1 = pca$x[,1],
-       tissue = tissue_gene_expression$y) |>
-  ggplot(aes(average, PC1, color = tissue)) + geom_point()
+avg <- rowMeans(tissue_gene_expression$x)
+pca <- prcomp(tissue_gene_expression$x)
+data.frame(PC1 = pca$x[,1], avg = avg, tissue = tissue_gene_expression$y) |>
+  ggplot(aes(PC1, avg, color = tissue)) + 
+  geom_point() +
+  ggtitle(paste("The correlation is", cor(pca$x[,1],avg)))
 ```
 
 
 (@) We see an association with the first PC and the observation averages. Redo the PCA but only after removing the center.
 ```{r}
-pca <- prcomp(tissue_gene_expression$x, center = TRUE)
+prcomp(tissue_gene_expression$x, center = F)
 ```
 
 
@@ -627,11 +629,10 @@ pca$x[,1:10] |> as.data.frame() |>
   mutate(tissue = tissue_gene_expression$y,
          row = 1:dim(pca$x)[1]) |>
   pivot_longer(-c(tissue, row), names_to = "PC", values_to = "value") |>
-  ggplot(aes(PC, value)) + 
+  ggplot(aes(tissue, value)) + 
   geom_boxplot() + 
-  facet_wrap(~tissue)
-
-
+  facet_wrap(~PC, ncol = 5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 
@@ -640,7 +641,5 @@ pca$x[,1:10] |> as.data.frame() |>
 tibble(PC = 1:length(summary(pca)$importance[2,]), 
        percent_variance_explained = summary(pca)$importance[2,]) |>
   ggplot(aes(PC, percent_variance_explained)) + geom_line()
-
-
 ```
 
